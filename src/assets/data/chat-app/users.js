@@ -1,4 +1,5 @@
 // chat app users
+
 export default [
     {
         id: 2,
@@ -34,6 +35,23 @@ export default [
             }
         ]
     },
+
+    {
+        id:1,
+        first_name: 'Sheryar',
+        last_name: 'Afzal',
+        photo_url: require('Assets/avatars/user-35.jpg'),
+        last_chat_date: 'yesterday',
+        isActive: true,
+        status: "online",
+        last_chat: 'Hi this is Zack ',
+        new_message_count: 5,
+        isSelectedChat: true,
+        previousChats: [
+
+        ]
+    },
+
     {
         id: 3,
         first_name: 'Madeleine',

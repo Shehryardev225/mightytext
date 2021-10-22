@@ -9,6 +9,7 @@ import { Helmet } from "react-helmet";
 // components
 import ChatArea from './components/ChatArea';
 import ChatSidebar from './components/ChatSidebar';
+import Header from '../../components/Header/Header';
 
 const drawerWidth = 310;
 
@@ -48,6 +49,9 @@ class ChatList extends Component {
 	render() {
 		const { classes, theme } = this.props;
 		const drawer = <ChatSidebar />
+
+		console.log("In House ",this.props.connectedUsers)
+		console.log("Name is ",this.props.user);
 		return (
 			<div className="chat-wrapper">
 				<Helmet>

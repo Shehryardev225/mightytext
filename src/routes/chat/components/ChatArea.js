@@ -12,17 +12,22 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { withRouter } from 'react-router-dom';
 import MenuIcon from '@material-ui/icons/Menu';
-
+import  io  from "socket.io-client";
+import ReactScrollFeed from 'react-scrollable-feed';
+import users from 'Assets/data/chat-app/users';
 // actions
 import { sendMessageToUser } from 'Actions';
 
 // app layouts
 import { getAppLayout } from 'Helpers/helpers';
 
+const socket=io.connect("http://localhost:8008")
 class ChatArea extends Component {
 
 	state = {
-		message: '',
+		msg: "", 
+		chat: [],
+		user: 0 ,
 		anchorEl: null,
 		chatOptions: [
 			'Mute Notifications',
@@ -32,6 +37,9 @@ class ChatArea extends Component {
 		]
 	}
 
+	
+
+
 	handleClose = () => {
 		this.setState({ anchorEl: null });
 	};
@@ -40,22 +48,115 @@ class ChatArea extends Component {
 		this.setState({ anchorEl: event.currentTarget });
 	}
 
-	onSubmitMessage(event) {
-		event.preventDefault();
-		if (this.state.message !== '') {
-			let data = {
-				user: this.props.selectedUser,
-				message: this.state.message,
-				isAdmin: true,
-				time: 'Just Now'
-			}
-			this.props.sendMessageToUser(data);
-			this.setState({ message: '' });
-			setTimeout(() => {
-				this.refs.chatScroll.scrollToBottom();
-			}, 200);
+	// componentDidMount() {
+	// 	socket.on("chat", (msg) => {
+	// 	  this.setState({
+			
+	// 		chat: [...this.state.chat, {msg}]
+		   
+	// 	  });
+	// 	  console.log("Msg",this.state.chat)
+	// 	});
+	//   }
+
+	  onTextChange = e => {
+		this.setState({ msg: e.target.value });
+	  };
+
+
+	  onMessageSubmit = () => {
+		
+		console.log("All users are ",users);
+		socket.emit("chat", {
+			content:this.state.msg,
+			to:socket.id
+
+		});
+
+
+		let data = {
+			user: this.props.selectedUser,
+			id:	this.props.selectedUser.id,
+			message: this.state.msg,
+			isAdmin: true,
+			time: 'Just Now'
 		}
+		const isAdmin=true;
+		console.log("User is ",data.user)
+		console.log("User Id ",data.id)
+		this.props.sendMessageToUser(data);
+		console.log("Chat Mesage is ",data.message);
+
+		this.setState({
+			
+		chat: [...this.state.chat, data.message],
+		user: [data.id,this.props.selectedUser.first_name, isAdmin]  
+				  });
+		console.log("Chat is... ",this.state.chat);
+		console.log("SelectedUser.id is ",this.state.user)
+	
+			this.setState({ msg: "" });
+		
+			
+		// return (
+		// 	<div>{this.renderChat()}</div>
+		// )
+	};
+	
+
+	
+	renderChat(userid) {
+		
+		const {chat}=this.state;
+		const {user}=this.state;
+	console.log("Id is ",this.state.id);
+	console.log("user id is ",userid);	
+	const id=this.state.id;
+	const count=chat.length;
+	console.log("Total Msg are ",count)
+	console.log("User New id is ",users)
+
+		
+	    return(
+		<div ref={this.chatContainer} className="Chat">
+		<ReactScrollFeed>	
+		{
+		
+		chat.map((payload, idx) => (
+		
+			
+			<MessageBlock
+			
+			even={payload.isAdmin}
+			key={idx}
+			data={payload}
+			/>
+		))
+	  }
+	  </ReactScrollFeed>
+		</div>
+		
+		)
 	}
+	
+
+	
+
+
+	// onSubmitMessage(event) {
+	// 	event.preventDefault();
+	// 	if (this.state.message !== '') {
+	// 		let data = {
+	// 			user: this.props.selectedUser,
+	// 			message: this.state.message,
+	// 			isAdmin: true,
+	// 			time: 'Just Now'
+	// 		}
+	// 		this.props.sendMessageToUser(data);
+	// 		this.setState({ message: '' });
+		
+	// 	}
+	// }
 
 	getScrollHeight() {
 		const { location } = this.props;
@@ -77,10 +178,13 @@ class ChatArea extends Component {
 			}
 		}
 	}
+	
+
 
 	render() {
 		const { selectedUser, admin_photo_url } = this.props;
 		if (selectedUser === null) {
+			
 			return (
 				<div className="chat-box-main">
 					<div className="text-center">
@@ -90,6 +194,14 @@ class ChatArea extends Component {
 				</div>
 			);
 		}
+		console.log("Selected User",selectedUser.id);
+
+		const userid =selectedUser.id;
+		socket.on("chat",({content,from})=>
+		{
+			console.log("Connected Users")
+		});
+		
 		const { chatOptions, anchorEl } = this.state;
 		return (
 			<div className="chat-main-body">
@@ -152,35 +264,52 @@ class ChatArea extends Component {
 					style={{ height: this.getScrollHeight() }}
 				>
 					<div className="chat-body p-30">
-						{selectedUser.previousChats.map((previousChat, key) => (
-							<MessageBlock
-								even={!previousChat.isAdmin}
-								key={key}
-								selectedUserPhotoUrl={selectedUser.photo_url}
-								data={previousChat}
-								adminPhotoUrl={admin_photo_url}
-							/>
-						))}
+						{
+							this.renderChat(userid)
+							// (()=>
+							// {
+							// 	console.log("Selected user is ",selectedUser)
+									
+								
+							
+							// })
+							
+				
+			 
+						// selectedUser.previousChats.map((previousChat, key) => (
+							
+						// 	<MessageBlock
+						// 		even={!previousChat.id}
+						// 		key={key}
+						// 		selectedUserPhotoUrl={selectedUser.photo_url}
+						// 		data={previousChat}
+						// 		adminPhotoUrl={admin_photo_url}
+						// 	/>
+							
+						// ))
+					}
 					</div>
 				</Scrollbars>
 				<div className="chat-footer d-flex px-4 align-items-center py-3">
 					<form onSubmit={(event) => this.onSubmitMessage(event)} className="mr-3 w-100">
 						<FormGroup className="mb-0">
 							<Input
+								name="message"
 								type="text"
 								id="search-msg"
 								placeholder="Type your message"
-								value={this.state.message}
-								className="msg-input"
-								onChange={(event) => this.setState({ message: event.target.value, })}
+							
+								onChange={e => this.onTextChange(e)} 
+								value={this.state.msg}	c
+								lassName="msg-input"
 							/>
 						</FormGroup>
 					</form>
 					<Button
-						variant="contained"
-						color="primary"
-						onClick={(event) => this.onSubmitMessage(event)}
-						className="submit-btn bg-primary"
+					variant="contained"
+					color="primary"
+					onClick={this.onMessageSubmit}
+					className="submit-btn bg-primary"
 					>
 						Send
 						<i className="zmdi zmdi-mail-send ml-2"></i>
